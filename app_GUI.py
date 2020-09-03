@@ -1,10 +1,10 @@
 import pandas as pd
 import re
 import string
-#import nltk
-#nltk.download('wordnet')
+import nltk
+nltk.download('wordnet')
 import streamlit as st
-#from nltk.stem.lancaster import LancasterStemmer
+from nltk.stem.lancaster import LancasterStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer 
 from sklearn.metrics.pairwise import cosine_similarity
 #from PIL import Image
@@ -24,8 +24,8 @@ This simple app demonstrates how open text can be used to suggest the most suita
 
 #st.header('User Query')
 
-#stopwords = nltk.corpus.stopwords.words('english')
-#ps = LancasterStemmer() 
+stopwords = nltk.corpus.stopwords.words('english')
+ps = LancasterStemmer() 
 
 # Data import 
 cols = ['Value Driver Display Name (T12)', 'KPI Name', 'Value Lever']
@@ -37,13 +37,13 @@ def clean_text(txt):
     #txt = re.sub('<.+?>', "", txt) # Remove errors in SFSF description  
     #txt = re.sub('&.+?;', "", txt)
     txt = "".join([c for c in txt if c not in string.punctuation]) # Discount punctuation
-    #tokens = re.split('\W+', txt) # Split words into a list of strings
-    #txt = [ps.stem(word) for word in tokens if word not in stopwords] #Stem words
+    tokens = re.split('\W+', txt) # Split words into a list of strings
+    txt = [ps.stem(word) for word in tokens if word not in stopwords] #Stem words
     return txt
 
 
-#tfidf_vect = TfidfVectorizer(analyzer=clean_text)
-#corpus = tfidf_vect.fit_transform(data['VD_KPI'])
+tfidf_vect = TfidfVectorizer(analyzer=clean_text)
+corpus = tfidf_vect.fit_transform(data['VD_KPI'])
 
 st.sidebar.header('Description of Customer Goal')
 
@@ -59,33 +59,32 @@ def best_match(query, corpus, no_res):
     
     # Apply tf-idf and cosine similarity for query and corpus
     
-    #query = tfidf_vect.transform([query])
-    #cosineSimilarities = cosine_similarity(corpus, query, dense_output = False)
-    #cos_df = cosineSimilarities.toarray()
+    query = tfidf_vect.transform([query])
+    cosineSimilarities = cosine_similarity(corpus, query, dense_output = False)
+    cos_df = cosineSimilarities.toarray()
     
     # Generate table of of top matches
     
-    #Match_percent = [i*100 for i in cos_df] # calculate percentage of match 
-    #matches = sorted([(x,i) for (i,x) in enumerate(Match_percent)], reverse=True)[:no_res] 
-    # index and percentage from cos_df
-    #idx = [item[1] for item in matches]
+    Match_percent = [i*100 for i in cos_df] # calculate percentage of match 
+    matches = sorted([(x,i) for (i,x) in enumerate(Match_percent)], reverse=True)[:no_res] # index and percentage from cos_df
+    idx = [item[1] for item in matches]
     
-    #matches = [item[0] for item in matches] # get the percentage
-    #matches = [int(float(x)) for x in matches] # convert to integer from np.array
-    #matches = [str(i) for i in matches] # convert int to string for percentage
-    #matches = list(map("{}%".format, matches))
+    matches = [item[0] for item in matches] # get the percentage
+    matches = [int(float(x)) for x in matches] # convert to integer from np.array
+    matches = [str(i) for i in matches] # convert int to string for percentage
+    matches = list(map("{}%".format, matches))
     
     ### Must list of lists to list of integers
     
     
-    #VD = [data.loc[i, 'Value Driver Display Name (T12)'] for i in idx] # Description of CD & KPI
-    #KPI = [data.loc[i, 'KPI Name'] for i in idx]
-    #Value_Lever = [data.loc[i, 'Value Lever'] for i in idx]
+    VD = [data.loc[i, 'Value Driver Display Name (T12)'] for i in idx] # Description of CD & KPI
+    KPI = [data.loc[i, 'KPI Name'] for i in idx]
+    Value_Lever = [data.loc[i, 'Value Lever'] for i in idx]
 
-    VD = query
-    KPI = [1,2,3]
+    #VD = query
+    #KPI = [1,2,3]
     
-    output = pd.DataFrame({'Value_Driver':VD, 'KPI':KPI})
+    output = pd.DataFrame({'Value_Driver':VD, 'KPI':KPI, 'Value Lever': Value_Lever,'Match_Percent':matches})
     #result = pd.DataFrame(result, matches)
 
     if st.sidebar.checkbox('Effictiveness'):
